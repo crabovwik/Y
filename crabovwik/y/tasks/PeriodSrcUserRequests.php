@@ -79,7 +79,7 @@ class DataStruct
     protected $periodicDataStructList;
 
     /** @var int */
-    protected $countToBePeriodic = 2;
+    protected $countToBePeriodic = 3;
 
     public function __construct()
     {
@@ -168,26 +168,59 @@ class DataStruct
         return $this->periodicDataStructList;
     }
 
-//    public function getBestInRowObject()
-//    {
-//        $max = $this->inRow;
-//        $maxObject = $this;
-//        foreach ($this->periodicDataStructList as $archivedRow) {
-//            $inRowInArchivedRow = $archivedRow->getInRow();
-//
-//            if ($inRowInArchivedRow > $max) {
-//                $max = $inRowInArchivedRow;
-//                $maxObject = $archivedRow;
-//            }
-//        }
-//
-//        return $maxObject;
-//    }
-
     public function getInRow()
     {
         return $this->inRow;
     }
+}
+
+class Oh
+{
+    protected $links;
+
+    public function __construct()
+    {
+        $this->links = array();
+    }
+
+    public function handle(AbstractYRow $row)
+    {
+        $link = $this->getLink($row);
+
+        $isLinked = false;
+        foreach ($link as $innerLink) {
+            if ($innerLink->isYour($row)) {
+                $innerLink->add($row);
+                $isLinked = true;
+            }
+        }
+
+        if (!$isLinked) {
+            $link[] =
+        }
+    }
+
+    protected function addFirstInnerLink($key, AbstractYRow $row)
+    {
+        $this->links[$key] = $row;
+    }
+
+    public function &getLink(AbstractYRow $row)
+    {
+        $srcUser = $row->getSrcUser();
+
+        if ($srcUser == '') {
+            return null;
+        }
+
+        if (!isset($this->links[$srcUser])) {
+            $this->links[$srcUser] = array();
+        }
+
+        return $this->links[$srcUser];
+    }
+
+    public function deleteLink($link)
 }
 
 class PeriodSrcUserRequestsTask implements TaskInterface
