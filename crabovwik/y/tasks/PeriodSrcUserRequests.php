@@ -5,192 +5,24 @@ namespace crabovwik\y\tasks;
 use crabovwik\y\data\AbstractYRow;
 use crabovwik\y\data\GroupedLinkItems;
 use crabovwik\y\data\LinkFileRow;
+use crabovwik\y\data\PairedLinkFileRow;
 use crabovwik\y\interfaces\LinkItemInterface;
 use crabovwik\y\interfaces\TaskInterface;
-
-//class PeriodicRequest
-//{
-//    /** @var int */
-//    protected $from;
-//
-//    /** @var int */
-//    protected $to;
-//
-//    /** @var int */
-//    protected $frequency;
-//
-//    /** @var int */
-//    protected $count;
-//
-//    /** @var AbstractYRow  */
-//    protected $request;
-//
-//    public function __construct($from, $to, AbstractYRow $request)
-//    {
-//        $this->from = $from;
-//        $this->to = $to;
-//        $this->request = $request;
-//    }
-//
-//    public function getFrom()
-//    {
-//        return $this->from;
-//    }
-//
-//    public function getTo()
-//    {
-//        return $this->to;
-//    }
-//
-//    public function getFrequency()
-//    {
-//        return $this->frequency;
-//    }
-//
-//    public function getCount()
-//    {
-//        return $this->count;
-//    }
-//
-//    public function getRequest()
-//    {
-//        return $this->request;
-//    }
-//}
-//
-//class DataStruct
-//{
-//    /** @var int */
-//    protected $from;
-//
-//    /** @var int */
-//    protected $to;
-//
-//    /** @var AbstractYRow */
-//    protected $prePrev;
-//
-//    /** @var AbstractYRow */
-//    protected $prev;
-//
-//    /** @var AbstractYRow */
-//    protected $current;
-//
-//    /** @var int */
-//    protected $inRow;
-//
-//    /** @var PeriodicRequest[] */
-//    protected $periodicDataStructList;
-//
-//    /** @var int */
-//    protected $countToBePeriodic = 3;
-//
-//    public function __construct()
-//    {
-//        $this->inRow = 0;
-//        $this->periodicDataStructList = array();
-//    }
-//
-//    public function getPrePrev()
-//    {
-//        return $this->prePrev;
-//    }
-//
-//    public function getPrev()
-//    {
-//        return $this->prev;
-//    }
-//
-//    public function getCurrent()
-//    {
-//        return $this->current;
-//    }
-//
-//    public function handle(AbstractYRow $row)
-//    {
-//        if ($this->prePrev === null) {
-//            $this->prePrev = $row;
-//            return;
-//        }
-//
-//        if ($this->prev === null) {
-//            $this->prev = $row;
-//            return;
-//        }
-//
-//        $currentPrevTimeInterval = $row->getUnixTimestamp() - $this->prev->getUnixTimestamp();
-//        $prevPrePrevTimeInterval = $this->prev->getUnixTimestamp() - $this->prePrev->getUnixTimestamp();
-//
-//        if ($currentPrevTimeInterval === $prevPrePrevTimeInterval) {
-//
-//            if ($this->inRow === 0) {
-//                $this->from = $row->getUnixTimestamp();
-//            } else {
-//                $this->to = $row->getUnixTimestamp();
-//            }
-//
-//            $this->addInRow();
-//        } else {
-//            if ($this->isPeriodic()) {
-//                $this->toPeriodicDataStructList();
-//            }
-//
-//            $this->resetInRow();
-//        }
-//
-//        $this->roll();
-//    }
-//
-//    protected function addInRow()
-//    {
-//        $this->inRow++;
-//    }
-//
-//    protected function isPeriodic() {
-//        return $this->inRow < $this->countToBePeriodic;
-//    }
-//
-//    protected function toPeriodicDataStructList()
-//    {
-//        $this->periodicDataStructList[] = new PeriodicRequest($this->from, $this->to, $this->prePrev);
-//    }
-//
-//    protected function resetInRow()
-//    {
-//        $this->inRow = 0;
-//    }
-//
-//    protected function roll()
-//    {
-//        $this->prePrev = $this->prev;
-//        $this->prev = $this->current;
-//        $this->current = null;
-//    }
-//
-//    public function getPeriodicDataStructList()
-//    {
-//        return $this->periodicDataStructList;
-//    }
-//
-//    public function getInRow()
-//    {
-//        return $this->inRow;
-//    }
-//}
 
 class Linker
 {
     /** @var GroupedLinkItems[] */
-    protected $groupedItems;
+    protected $groupedItems = array();
 
     /** @var GroupedLinkItems[] */
-    protected $pairedItems;
+    protected $pairedItems = array();
 
     /** @var LinkItemInterface[] */
-    protected $unpairedItems;
+    protected $unpairedItems = array();
 
-    protected $groupedItemsLinksHistory;
+    protected $groupedItemsLinksHistory = array();
 
-    protected $pairedItemsLinksHistory;
+    protected $pairedItemsLinksHistory = array();
 
     public function add(LinkItemInterface $linkItem)
     {
@@ -228,6 +60,78 @@ class Linker
         $this->groupUnpairedWithPairedItems();
         $this->mergePairedWithGroupedItems();
         $this->moveMultiPairedToGroupedItems();
+    }
+
+    public function newLogic()
+    {
+        $unpairedItemsCount = count($this->unpairedItems);
+
+        if ($unpairedItemsCount < 3) {
+            return;
+        }
+
+        $firstItemIndex     = 0;
+        $secondItemIndex    = 1;
+        $checkItemIndex     = 1;
+
+        while ($checkItemIndex != $unpairedItemsCount - 1) {
+
+            if (count($this->unpairedItems) < 3) {
+                $this->unpairedItems = array();
+                break;
+            }
+
+            $isIndexedWasForceChanged = false;
+
+            if (!isset($this->unpairedItems[$firstItemIndex]) || !isset($this->unpairedItems[$secondItemIndex])) {
+                $a = 'b';
+            }
+
+            $firstItem = $this->unpairedItems[$firstItemIndex];
+            $secondItem = $this->unpairedItems[$secondItemIndex];
+
+            unset($this->unpairedItems[$firstItemIndex]);
+            unset($this->unpairedItems[$secondItemIndex]);
+
+            $group = new GroupedLinkItems();
+            $group->add($firstItem);
+            $group->add($secondItem);
+
+            $checkItemIndex = $secondItemIndex + 1;
+
+            while ($checkItemIndex != $unpairedItemsCount - 1) {
+
+                $checkItem = $this->unpairedItems[$checkItemIndex];
+                if ($group->isInGroupWith($checkItem)) {
+                    $group->add($checkItem);
+                    unset($this->unpairedItems[$checkItemIndex]);
+
+                    $isIndexedWasForceChanged = true;
+
+                    if ($firstItemIndex == $checkItemIndex || $secondItemIndex == $checkItemIndex) {
+                        $firstItemIndex++;
+                        $secondItemIndex++;
+                    }
+
+                    if ($firstItemIndex + 2 == $checkItemIndex) {
+                        $firstItemIndex += 3;
+                        $secondItemIndex += 3;
+                    }
+                }
+
+                $checkItemIndex++;
+            }
+
+            if (count($group->getLinkItems()) > 2) {
+                $this->groupedItems[] = $group;
+            }
+
+            if (!$isIndexedWasForceChanged) {
+                $firstItemIndex     += 2;
+                $secondItemIndex    += 2;
+                $checkItemIndex     = $secondItemIndex;
+            }
+        }
     }
 
     protected function pairUnpairedItems()
@@ -358,6 +262,7 @@ class PeriodSrcUserRequestsTask implements TaskInterface
 
     public function doLogic(AbstractYRow $row)
     {
+        static $num = 0;
         $rowData = $row->getAsYArray();
         $rowData['_time'] = "\"{$rowData['_time']}\"";
         $row = new LinkFileRow(implode(',', $rowData));
@@ -371,30 +276,30 @@ class PeriodSrcUserRequestsTask implements TaskInterface
         }
 
         $this->keyLinkerMap[$srcUser]->add($row);
+        echo "\r" . (++$num);
 //        $this->keyLinkerMap[$srcUser]->link();
     }
 
     public function getResult()
     {
-//        $resultData = array();
-//        foreach ($this->dataStructs as $srcUser => $dataStruct) {
-//            /** @var PeriodicRequest[] $periodicDataStructList */
-//            $periodicDataStructList = $dataStruct->getPeriodicDataStructList();
-//
-//            foreach ($periodicDataStructList as $periodicDataStruct) {
-//                $resultData[$srcUser][] = array(
-//                    'from' => $periodicDataStruct->getFrom(),
-//                    'to' => $periodicDataStruct->getTo(),
-//                    'frequency' => $periodicDataStruct->getFrequency(),
-//                    'count' => $periodicDataStruct->getCount(),
-//                    'request' => $periodicDataStruct->getRequest()->getAsYArray(),
-//                );
-//            }
-//        }
         $resultData = array();
         foreach ($this->keyLinkerMap as $srcUser => $linker) {
-            $linker->link();
-            $resultData[$srcUser] = $linker->getGroupedLinks();
+            $linker->newLogic();
+            $index = 0;
+
+            $groupedLinks = $linker->getGroupedLinks();
+            $groupedLinksCount = count($groupedLinks);
+
+            if ($groupedLinksCount > 1) {
+                echo "\n{$srcUser} => {$groupedLinksCount}\n";
+            }
+
+            foreach ($linker->getGroupedLinks() as $groupedLink) {
+                foreach ($groupedLink->getLinkItems() as $linkItem) {
+                    $resultData[$srcUser][$index][] = $linkItem->getAsYArray();
+                }
+                $index++;
+            }
         }
 
         return json_encode($resultData);

@@ -37,7 +37,7 @@ class GroupedLinkItems implements GroupedLinkItemsInterface
 
     public function getInterval()
     {
-        if (count($this->linkItems < 2)) {
+        if (count($this->linkItems) < 2) {
             return null;
         }
 
@@ -55,7 +55,7 @@ class GroupedLinkItems implements GroupedLinkItemsInterface
         }
 
         return
-            (abs($item->getUnixTimestamp() - reset($this->linkItems)->getUnixTimestamp()) === $this->interval) ||
-            (abs($item->getUnixTimestamp() - end($this->linkItems)->getUnixTimestamp()) === $this->interval);
+            (abs($item->getUnixTimestamp() - reset($this->linkItems)->getUnixTimestamp()) === $this->getInterval()) ||
+            (abs($item->getUnixTimestamp() - end($this->linkItems)->getUnixTimestamp()) === $this->getInterval());
     }
 }
