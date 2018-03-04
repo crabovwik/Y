@@ -38,7 +38,7 @@ if (!$fileResource) {
 $tasks = array(
     new \crabovwik\y\tasks\MaxRequestUsersTask(),
     new \crabovwik\y\tasks\MaxDataUsersTask(),
-    new \crabovwik\y\tasks\PeriodSrcUserRequestsTask(),
+//    new \crabovwik\y\tasks\PeriodSrcUserRequestsTask(),
 //    new \crabovwik\y\tasks\PeriodSrcIpRequestsTask(),
 //    new \crabovwik\y\tasks\NGrammTask(),
 );
